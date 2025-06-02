@@ -4,17 +4,33 @@
 //
 //  Created by Johann Flores on 5/13/25.
 //
-
 import SwiftUI
 
+@MainActor
 @main
 struct MindReflectApp: App {
-    let persistenceController = PersistenceController.shared
-
+    @StateObject private var authViewModel = AuthenticationViewModel()
+    @State private var hasCompletedOnboarding = UserDefaults.standard.bool(forKey: "hasCompletedOnboarding")
+    
+    init() {
+        // Register the custom transformer
+        StringArrayTransformer.register()
+    }
+    
     var body: some Scene {
         WindowGroup {
-            ContentView()
-                .environment(\.managedObjectContext, persistenceController.container.viewContext)
+            if hasCompletedOnboarding {
+                if authViewModel.isAuthenticated {
+                    HomeView()
+                } else {
+                    AuthenticationView()
+                        .environmentObject(authViewModel)
+                }
+            } else {
+                OnboardingView {
+                    hasCompletedOnboarding = true
+                }
+            }
         }
     }
 }
